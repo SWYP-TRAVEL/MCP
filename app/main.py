@@ -1,11 +1,11 @@
 from fastapi import FastAPI
-from api.state import router as state_router
+from api.create import router as create_router
 
 app = FastAPI(
     title="MCP client",
 )
 
-app.include_router(state_router)
+app.include_router(create_router)
 
 if __name__ == "__main__":
     import uvicorn
