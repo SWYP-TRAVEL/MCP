@@ -18,8 +18,8 @@ class ItineraryDetail(BaseModel):
     description: str
     
 
-@router.get("/state", summary="get user status")
-async def state(details: ItineraryDetail):
-    return details
+@router.get("/create", summary="itinerary creation request")
+async def create(itinerary_details: ItineraryDetail):
+    return itinerary_details
 
     
