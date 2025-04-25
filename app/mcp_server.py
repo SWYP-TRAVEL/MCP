@@ -2,7 +2,7 @@ from mcp.server.fastmcp import FastMCP
 import requests
 import xml.etree.ElementTree as et
 
-mcp = FastMCP("mcp_server")
+mcp = FastMCP(name="mcp_server", port=8070, host="localhost")
 
 api_key = "TDgGr/x6dfrWnIXejJ3/YbDRGmYcayi0vK2sywGSahP8zsQlkojKZwkcBQU2bsYre5aP6y1YaLFnXhEKxzGqmg=="
 region_url = "http://apis.data.go.kr/B551011/KorService1/areaBasedList1"
@@ -34,7 +34,7 @@ class TourDto:
 
     def __repr__(self):
         return (
-            f"여행지 이름: {self.title}\n"
+            f"\n여행지 이름: {self.title}\n"
             f"사진 URL: {self.first_image}\n"
             f"주소: {self.addr1}\n"
             f"경도: {self.mapx}\n"
@@ -113,4 +113,5 @@ def extract_xml_data(text) -> list[TourDto]:
     return dtos
 
 
-print(get_around_list())
+if __name__ == "__main__":
+    mcp.run(transport="sse")
