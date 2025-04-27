@@ -1,8 +1,9 @@
 import asyncio
 from typing import List
 from pydantic import BaseModel
-from agents import Agent, Runner, gen_trace_id, trace, ModelSettings,OpenAIChatCompletionsModel, AsyncOpenAI
-from agents.mcp import MCPServer, MCPServerSse
+from agents import Agent, Runner, ModelSettings
+from agents.mcp import MCPServerSse
+
 from schemas.itinerary import ItineraryDetail
 
 
@@ -26,16 +27,16 @@ def itinerary_detail_to_prompt(itinerary_detail: ItineraryDetail) -> str:
         f"travel_with : {itinerary_detail.travel_with}\n"
     )
 
-async def run(mcp_server: MCPServer, itinerary_detail: ItineraryDetail):
-   agent = Agent(
+async def run(mcp_server:MCPServerSse, itinerary_detail: ItineraryDetail):
+    agent = Agent(
        name="Travel Planner Agent",
-       instructions="You are travel planner, Use every functions to response the requirements.\n",
+       instructions="You are Korean travel planner, Use every functions to response the requirements.\n",
        model="gpt-4.1-mini",
        mcp_servers=[mcp_server],
        model_settings=ModelSettings(tool_choice="required", temperature=0.8),
        output_type=Schadule,
    )
-   prompt = itinerary_detail_to_prompt(itinerary_detail)
-   print(prompt)
-   result = await Runner.run(agent, input=prompt)
-   return result.final_output
+    prompt = itinerary_detail_to_prompt(itinerary_detail)
+    print(prompt)
+    result = await Runner.run(agent, input=prompt)
+    return result.final_output
