@@ -34,6 +34,6 @@ async def create(itinerary_details: ItineraryDetail):
         trace_id = gen_trace_id()
         with trace(workflow_name="Travel", trace_id=trace_id):
             print(f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}\n")
-            client.run(server, itinerary_details)
-    return itinerary_details
+            res = await client.run(server, itinerary_details)
+    return res
 

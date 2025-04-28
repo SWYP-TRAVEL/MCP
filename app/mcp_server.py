@@ -14,6 +14,7 @@ ex_tour_cat3 = [
     {"name": "호수", "value": "A01011700"},
     {"name": "가족코스", "value": "C01120001"}
 ]
+
 tour_type = [
     {"name": "관광지", "value": "12"},
     {"name": "문화시설", "value": "14"},

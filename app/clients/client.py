@@ -8,7 +8,7 @@ from schemas.itinerary import ItineraryDetail
 
 
 class Schadule(BaseModel):
-    day_date: int
+    day: int
     breakfast_online_summary: str
     launch: str
     launch_online_summary: str
@@ -19,11 +19,16 @@ class Schadule(BaseModel):
     attraction2: str
     attraction2_online_summary: str
 
+class ResponseFormat(BaseModel):
+    region: str
+    travel_days: int
+    itinerary: List[Schadule]
+
 def itinerary_detail_to_prompt(itinerary_detail: ItineraryDetail) -> str:
     return (
-        f"Start date : {itinerary_detail.start_date}\n",
-        f"End date : {itinerary_detail.end_date}\n",
-        f"perpose : {itinerary_detail.description}\n",
+        f"Start date : {itinerary_detail.start_date}\n"
+        f"End date : {itinerary_detail.end_date}\n"
+        f"perpose : {itinerary_detail.description}\n"
         f"travel_with : {itinerary_detail.travel_with}\n"
     )
 
@@ -33,8 +38,8 @@ async def run(mcp_server:MCPServerSse, itinerary_detail: ItineraryDetail):
        instructions="You are Korean travel planner, Use every functions to response the requirements.\n",
        model="gpt-4.1-mini",
        mcp_servers=[mcp_server],
-       model_settings=ModelSettings(tool_choice="required", temperature=0.8),
-       output_type=Schadule,
+       model_settings=ModelSettings(tool_choice="required", temperature=0.3),
+       output_type=ResponseFormat,
    )
     prompt = itinerary_detail_to_prompt(itinerary_detail)
     print(prompt)
