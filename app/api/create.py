@@ -37,3 +37,15 @@ async def create(itinerary_details: ItineraryDetail):
             res = await client.run(server, itinerary_details)
     return res
 
+@router.get("/triplet", summary="listup for 3 course"):
+    async with MCPServerSse (
+        name="mcp_server",
+        params= {
+            "url": "http://localhost:8070/sse"
+        }, 
+    ) as server:
+        trace_id = gen_trace_id()
+        with trace(workflow_name="Travel", trace_id=trace_id):
+            print(f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}\n")
+            res = await client.run(server, itinerary_details)
+    return res
