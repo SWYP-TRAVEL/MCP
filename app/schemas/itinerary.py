@@ -3,7 +3,7 @@ Itinerary schemas for API request/response models.
 """
 from pydantic import BaseModel
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 from datetime import date
 
 class TravelWith(str, Enum):
@@ -17,3 +17,4 @@ class ItineraryDetail(BaseModel):
     start_date: date
     end_date: date
     description: str
+    theme: Optional[str]

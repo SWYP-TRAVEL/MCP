@@ -1,16 +1,17 @@
 from mcp.server.fastmcp import FastMCP
 import requests
 import xml.etree.ElementTree as et
-from typing import Optional
+from typing import List
 from enum import Enum
 from pydantic import BaseModel, Field
 
 mcp = FastMCP(name="mcp_server", port=8070, host="localhost")
 
-api_key = "TDgGr/x6dfrWnIXejJ3/YbDRGmYcayi0vK2sywGSahP8zsQlkojKZwkcBQU2bsYre5aP6y1YaLFnXhEKxzGqmg=="
+# api_key = "TDgGr/x6dfrWnIXejJ3/YbDRGmYcayi0vK2sywGSahP8zsQlkojKZwkcBQU2bsYre5aP6y1YaLFnXhEKxzGqmg=="
+api_key = "U+A0efX1x7HoUpPkcQjWQNStDB4ReZkO+G6RRfwo71N8xefvkeG4i3qq8kT7pGyzs3o9RtIclCa2alethJRAnw=="
 region_url = "http://apis.data.go.kr/B551011/KorService1/areaBasedList1"
 around_url = "http://apis.data.go.kr/B551011/KorService1/locationBasedList1"
-
+keyword_url   = "http://apis.data.go.kr/B551011/KorService1/searchKeyword1"
 
 class TourDto:
     def __init__(self, title, first_image, addr1, mapx, mapy):
@@ -22,39 +23,28 @@ class TourDto:
 
     def __repr__(self):
         return (
-            f"\n여행지 이름: {self.title}\n"
+            f"여행지 이름: {self.title}\n"
             f"사진 URL: {self.first_image}\n"
             f"주소: {self.addr1}\n"
             f"mapX: {self.mapx}\n"
             f"mapY: {self.mapy}\n"
         )
 
-
-tour_type = [
-    {"name": "관광지", "type_id": "12"},
-    {"name": "문화시설", "type_id": "14"},
-    {"name": "축제공연행사", "type_id": "15"},
-    {"name": "여행코스", "type_id": "25"},
-    {"name": "레포츠", "type_id": "28"},
-    {"name": "쇼핑", "type_id": "38"}
-]
-
-class TourType(str, Enum):
+class AttractionType(str, Enum):
     tourist_spot = "12",
     cultural_activities = "14",
-    tour_course = "25",
     leisure_sports = "28",
     shopping = "38"
 
 class AreaEnum(str, Enum):
-   전체 = Field("", description="Use this field if there is no mention of a specific region.")
-   서울 = "1"
-   인천 = "2"
-   대전 = "3"
-   대구 = "4"
-   광주 = "5"
-   부산 = "6"
-   울산 = "7"
+   전국 =  "0"
+   서울시 = "1"
+   인천시 = "2"
+   대전시 = "3"
+   대구시 = "4"
+   광주시 = "5"
+   부산시 = "6"
+   울산시 = "7"
    세종특별자치시 = "8"
    경기도 = "31"
    강원특별자치도 = "32"
@@ -65,54 +55,132 @@ class AreaEnum(str, Enum):
    전북특별자치도 = "37"
    전라남도 = "38"
    제주도 = "39"
-
 @mcp.tool()
-def get_spot_list(tour_type: TourType=TourType.cultural_activities, area: AreaEnum=AreaEnum.전체) -> list[TourDto]:
+def list_attractions_by_region(attraction_type: AttractionType = AttractionType.cultural_activities,
+                              region: AreaEnum = AreaEnum.전국) -> list[TourDto]:
     """
-    1번만 사용할 수 있습니다.!!!
-    지정된 여행 타입과 지역에 따른 여행지 목록을 반환합니다.
-    """
-    region_params = {
-        'MobileOS': 'ETC',  #필수
-        'MobileApp': 'AppTest',  #필수
-        "ServiceKey": api_key,  #api key
-        "contentTypeId": tour_type,  #관광타입  / 12: 관광지, 14: 문화시설 ....
-        "areaCode": area,
-        "numOfRows": 3,  #한페이지당 보여질 개수
-        "pageNo": 1  #몇번째 페이지인지(이름순으로 정렬되어있음)
-    }
-    response = requests.get(region_url, params=region_params)
-    print(response)
-    return extract_xml_data(response.text)  #지금은 맨앞 3개만 받아오는데 나중에 랜덤으로 바꿀예정
-
-
-@mcp.tool()
-def get_around_list(mapX="127.0317056", mapY="37.289984", tour_type: TourType = TourType.cultural_activities) -> list[TourDto]:
-    """
-    특정 위치 주변의 여행지를 추천합니다.
+    Returns a list of attractions filtered by category and geographic region.
+    
+    This function retrieves attractions based on specified category and region,
+    providing a curated selection of places to visit.
     
     Args:
-        mapX (str): 경도 좌표
-        mapY (str): 위도 좌표
-        type_id (TourType): 여행 타입 ID (12: 관광지, 14: 문화시설, 15: 축제공연행사, 25: 여행코스, 28: 레포츠, 38: 쇼핑)
+        attraction_type (AttractionType): Category of attractions to find:
+            - cultural_activities (14): Cultural facilities (museums, galleries, etc.)
+            - tourist_spots (12): Tourist attractions (landmarks, scenic spots)
+            - festivals (15): Festivals, performances, events
+            - travel_courses (25): Travel routes and itineraries
+            - leisure_sports (28): Leisure and sports activities
+            - shopping (38): Shopping destinations
+        region (AreaEnum): Geographic region to search within:
+            - 전국 (All regions - nationwide search)
+            - 서울, 부산, 대구, etc. (Specific cities or provinces)
+    
+    Returns:
+        list[TourDto]: A list of attraction information objects (maximum 15 items)
+    
+    Example:
+        list_attractions_by_region(AttractionType.tourist_spots, AreaEnum.서울)
+    """
+    region_str: str = ""
+    if region != AreaEnum.전국:
+        region_str = region.value
+    print(region_str)
+    region_params = {
+        'MobileOS': 'ETC',  # Required
+        'MobileApp': 'AppTest',  # Required
+        "ServiceKey": api_key,  # API key
+        "areaCode": region_str,  # Geographic region code
+        "numOfRows": 15,  # Results per page
+        "pageNo": 1  # Page number (sorted by name)
+    }
+    response = requests.get(region_url, params=region_params)
+    # Currently returns first few results; planned to implement random selection in the future
+    return extract_xml_data(response.text)
+
+@mcp.tool()
+def find_nearby_attractions(longitude="127.0317056", latitude="37.289984", attraction_type: AttractionType = AttractionType.cultural_activities) -> list[TourDto]:
+    """
+    Returns a list of recommended attractions near a specific location based on coordinates and type.
+    
+    Args:
+        longitude (str): The longitude coordinate (east-west position) of the center location
+        latitude (str): The latitude coordinate (north-south position) of the center location
+        attraction_type (TourType): The category of attractions to find:
+            - cultural_activities (14): Cultural facilities
+            - tourist_spots (12): Tourist attractions
+            - festivals (15): Festivals, performances, events
+            - travel_courses (25): Travel routes
+            - leisure_sports (28): Leisure and sports activities
+            - shopping (38): Shopping destinations
         
     Returns:
-        list[TourDto]: 주변 여행지 정보 목록
+        list[TourDto]: A list of nearby attraction information objects within 2000m of the specified coordinates
+    
+    Example:
+        find_nearby_attractions("126.9816", "37.5640", TourType.tourist_spots)
     """
     around_params = {
         'MobileOS': 'ETC',  #필수
         'MobileApp': 'AppTest',  #필수
         "ServiceKey": api_key,  #api key
-        "contentTypeId": tour_type,  #관광타입  / 12: 관광지, 14: 문화시설 ....
+        "contentTypeId": attraction_type,  #관광타입
         "numOfRows": 10,  #한페이지당 보여질 개수
         "pageNo": 1,  #몇번째 페이지인지(이름순으로 정렬되어있음)
-        "mapX": mapX,  #경도
-        "mapY": mapY,  #위도
+        "mapX": longitude,  #경도
+        "mapY": latitude,  #위도
         "radius": 2000  #위치로부터 몇m까지인지(최대2000m)
     }
     response = requests.get(around_url, params=around_params)
     return extract_xml_data(response.text)
 
+
+@mcp.tool()
+async def search_attractions_by_keyword(
+    keyword: str, 
+    attraction_type: AttractionType = AttractionType.cultural_activities, 
+    region: AreaEnum = AreaEnum.전국, 
+    page_number: int = 1) -> List[TourDto]:
+    """
+    Searches for attractions based on a keyword with optional filtering by type and region.
+    
+    Args:
+        keyword (str): The search term to find matching attractions (e.g., "palace", "museum")
+        attraction_type (TourType): Category of attractions to search within:
+            - cultural_activities (14): Cultural facilities
+            - tourist_spots (12): Tourist attractions
+            - festivals (15): Festivals, performances, events
+            - travel_courses (25): Travel routes
+            - leisure_sports (28): Leisure and sports activities
+            - shopping (38): Shopping destinations
+        region: AreaEnum = Field(default=AreaEnum.전국, description="Geographic region to limit the search to"), 
+        page_number (int): Page number for paginated results (starts from 1)
+    
+    Returns:
+        List[TourDto]: A list of attractions matching the keyword and filters (maximum 15 items per page)
+    
+    Example:
+        search_attractions_by_keyword("palace", TourType.tourist_spots, AreaEnum.서울)
+    """
+    region_str: str = ""
+    if region != AreaEnum.전국:
+        region_str = region.value
+    print(region_str)
+    search_params = {
+        'MobileOS': 'ETC',  # Required
+        'MobileApp': 'AppTest',  # Required
+        "ServiceKey": api_key,  # API key
+        "contentTypeId": attraction_type.value,  # Attraction category
+        "areaCode": region_str,  # Geographic region code
+        "keyword": keyword,  # URL-encoded search term
+        "numOfRows": 15,  # Results per page
+        "pageNo": page_number  # Page number
+    }
+    
+    response = requests.get(keyword_url, params=search_params)
+    print(search_params)
+    print(response.text)
+    return extract_xml_data(response.text)
 
 def extract_xml_data(text) -> list[TourDto]:
     root = et.fromstring(text)

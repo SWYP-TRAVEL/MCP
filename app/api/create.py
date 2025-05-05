@@ -7,7 +7,7 @@ from clients import client
 
 from agents import gen_trace_id, trace
 from agents.mcp import MCPServerSse
-
+import os
 router = APIRouter(prefix="/api")
 
 class TravelWith(str, Enum):
@@ -37,9 +37,11 @@ async def create(itinerary_details: ItineraryDetail):
             res = await client.run(server, itinerary_details)
     return res
 
-@router.get("/triplet", summary="listup for 3 course"):
+
+@router.get("/triplet", summary="listup for 3 course")      
+async def triplet(itinerary_details: ItineraryDetail):
     async with MCPServerSse (
-        name="mcp_server",
+        name="triplet_mcp_server",
         params= {
             "url": "http://localhost:8070/sse"
         }, 
@@ -47,5 +49,5 @@ async def create(itinerary_details: ItineraryDetail):
         trace_id = gen_trace_id()
         with trace(workflow_name="Travel", trace_id=trace_id):
             print(f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}\n")
-            res = await client.run(server, itinerary_details)
+            res = await client.triplet(server, itinerary_details)
     return res
