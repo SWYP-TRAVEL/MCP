@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from api.create import router as create_router
+from api.api import router
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -8,7 +8,7 @@ app = FastAPI(
     title="MCP client",
 )
 
-app.include_router(create_router)
+app.include_router(router=router)
 
 if __name__ == "__main__":
     import uvicorn
