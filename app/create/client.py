@@ -85,11 +85,11 @@ def parse_place_info(text):
     return place_info
 
 async def create_itinerary(mcp_server: MCPServerSse, itinerary: ItineraryDetail):
-    model_name = "gpt-4.1-mini"
+    model_name = "gpt-4.1"
 
     model_settings = ModelSettings(
         tool_choice="required",
-        temperature=0.53,
+        temperature=0.7,
     )
 
     agent = Agent(
@@ -103,14 +103,16 @@ async def create_itinerary(mcp_server: MCPServerSse, itinerary: ItineraryDetail)
     
     prompt = "tool은 5번이내로 사용하고, 그 tool의 결과에만 기반해서 여행지를 추천해주세요.\n" + str(itinerary) 
     result: RunResult = await Runner.run(agent, input=prompt)
-    
+    print(result)
     places_dict = {}
     
     for item in result.new_items:
         if isinstance(item, ToolCallOutputItem):
             if item.output:
                 outputs = json.loads(item.output)
+                print(outputs)
                 for out in outputs:
+                    print(out)
                     text = out['text']
                     # 별도 함수를 통해 장소 정보 파싱
                     place_info = parse_place_info(text)

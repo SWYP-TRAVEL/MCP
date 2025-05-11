@@ -3,10 +3,12 @@ import requests
 import xml.etree.ElementTree as et
 from typing import List, Optional
 from enum import Enum
-
-
-# api_key = "TDgGr/x6dfrWnIXejJ3/YbDRGmYcayi0vK2sywGSahP8zsQlkojKZwkcBQU2bsYre5aP6y1YaLFnXhEKxzGqmg=="
-api_key = "U+A0efX1x7HoUpPkcQjWQNStDB4ReZkO+G6RRfwo71N8xefvkeG4i3qq8kT7pGyzs3o9RtIclCa2alethJRAnw=="
+from dotenv import load_dotenv
+import os
+import urllib.parse
+load_dotenv()
+api_key = os.getenv('TOUR_API_KEY')
+api_key = urllib.parse.unquote(api_key)
 region_url = "http://apis.data.go.kr/B551011/KorService1/areaBasedList1"
 around_url = "http://apis.data.go.kr/B551011/KorService1/locationBasedList1"
 keyword_url   = "http://apis.data.go.kr/B551011/KorService1/searchKeyword1"
@@ -87,17 +89,20 @@ def list_attractions_by_region(attraction_type: AttractionType = AttractionType.
         'MobileOS': 'ETC',  # Required
         'MobileApp': 'AppTest',  # Required
         "ServiceKey": api_key,  # API key
-        # "contentTypeId": attraction_type.value,
+        "contentTypeId": attraction_type.value,
         "arrange": "Q",
-        # "areaCode": region_str,  # Geographic region code
+        "areaCode": region_str,  # Geographic region code
         "numOfRows": 25,  # Results per page
         "pageNo": 1  # Page number (sorted by name)
     }
     response = requests.get(region_url, params=region_params)
+    print(response.text)
     # Currently returns first few results; planned to implement random selection in the future
     dtos = extract_xml_data(response.text)
-    return random.sample(dtos, 5)
-
+    if len(dtos) > 5:
+        return random.sample(dtos, 5)
+    else:
+        return dtos
 def find_nearby_attractions(mapX=127.0317056, mapY=37.289984, attraction_type: AttractionType = AttractionType.tourist_spot) ->  Optional[List[TourDto]]:
     """
     Returns a list of recommended attractions near a specific location based on coordinates and type.
