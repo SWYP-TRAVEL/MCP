@@ -25,6 +25,7 @@ class DailySchedule(BaseModel):
     attraction2_info: SpotInfo
 
 class MCPResponseFormat(BaseModel):
+    travel_title: str
     travel_days: int
     itinerary: List[DailySchedule]
 
@@ -44,6 +45,7 @@ class ResponseDailySchedule(BaseModel):
     attraction2_info: Spot_DTO
 
 class ResponseFormat(BaseModel):
+    title: str
     travel_days: int
     itnerary: List[ResponseDailySchedule]
         
@@ -125,6 +127,7 @@ async def create_itinerary(mcp_server: MCPServerSse, itinerary: ItineraryDetail)
     
     # ResponseFormat 객체 생성
     response_format = ResponseFormat(
+        title=mcp_result.travel_title,
         travel_days=mcp_result.travel_days,
         itnerary=[]  # 참고: ResponseFormat 클래스의 오타 (itnerary)를 그대로 사용
     )
@@ -144,7 +147,7 @@ async def create_itinerary(mcp_server: MCPServerSse, itinerary: ItineraryDetail)
     # 디버깅용 출력 (필요시 유지)
     return response_format
 
-async def create_suggestion():
+async def create_suggestion(input: str):
     model_name = "gpt-4.1-mini"
 
     model_settings = ModelSettings(
@@ -169,6 +172,7 @@ async def create_suggestion():
 요즘 지겨서 조용하고 힐링되는 여행이었으면 좋겠어요.
 </example>
     """
+    prompt += "\n사용자가 현재까지 입력한 내용은 다음과 같습니다.\n"+input
     result = await Runner.run(agent, prompt)
     return result.final_output
 
@@ -184,7 +188,7 @@ async def change_attraction(mcp_server: MCPServerSse, mapX, mapY):
         model_settings=model_settings,
         name="Journey planner",
         mcp_servers=[mcp_server],
-        output_type=SpotInfo
+        output_type=Spot_DTO
     )
     prompt = f"다음 좌표 주변의 관광지를 찾아주세요. mapX: {mapX}, mapY: {mapY}"
     

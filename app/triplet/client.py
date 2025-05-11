@@ -25,6 +25,7 @@ model_settings = ModelSettings(
 class Destination(BaseModel):
     location: str = Field(description="구체적인 행정구역명 (예: 경기도 광주시, 대전광역시, 서울특별시)")
     theme: str = Field(description="해당 지역의 여행 테마")
+    image_url: str = Field(description="해당 지역 이미지 url의 경로")
 
 class TravelRecommendations(BaseModel):
     recommendation1: Destination

@@ -37,11 +37,11 @@ async def triplet(itinerary: ItineraryDetail):
     return res
 
 @router.post("/suggest_discription", summary="suggest discription")
-async def suggest():
+async def suggest(input: str):
     trace_id = gen_trace_id()
     with trace(workflow_name="Travel", trace_id=trace_id):
         print(f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}\n")
-    res = await create_suggestion()
+    res = await create_suggestion(input)
     return res
 
 @router.post("/change_attraction")
