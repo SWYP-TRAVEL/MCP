@@ -63,12 +63,7 @@ INSTRUCTION = (
 )
 
 
-model_name = "gpt-4.1-mini"
 
-model_settings = ModelSettings(
-    tool_choice="required",
-    temperature=0.53,
-)
 
 import json
 def parse_place_info(text):
@@ -90,6 +85,13 @@ def parse_place_info(text):
     return place_info
 
 async def create_itinerary(mcp_server: MCPServerSse, itinerary: ItineraryDetail):
+    model_name = "gpt-4.1-mini"
+
+    model_settings = ModelSettings(
+        tool_choice="required",
+        temperature=0.53,
+    )
+
     agent = Agent(
         model=model_name,
         model_settings=model_settings,
@@ -141,6 +143,8 @@ async def create_itinerary(mcp_server: MCPServerSse, itinerary: ItineraryDetail)
     return response_format
 
 async def create_suggestion():
+    model_name = "gpt-4.1-mini"
+
     model_settings = ModelSettings(
         tool_choice="none",
         temperature=1,
@@ -166,7 +170,26 @@ async def create_suggestion():
     result = await Runner.run(agent, prompt)
     return result.final_output
 
+async def change_attraction(mcp_server: MCPServerSse, mapX, mapY):
+    model_name = "gpt-4.1-mini"
 
+    model_settings = ModelSettings(
+        tool_choice="auto",
+        temperature=0.53,
+    )
+    agent = Agent(
+        model=model_name,
+        model_settings=model_settings,
+        name="Journey planner",
+        mcp_servers=[mcp_server],
+        output_type=SpotInfo
+    )
+    prompt = f"다음 좌표 주변의 관광지를 찾아주세요. mapX: {mapX}, mapY: {mapY}"
+    
+    # 에이전트를 실행하여 주변 관광지 검색
+    result: RunResult = await Runner.run(agent, input=prompt)
+    print(result.final_output)
+    return result.final_output
 
 def create_spot_dto(attraction_type: str, spot_info: SpotInfo, places_dict: dict) -> Spot_DTO:
     """

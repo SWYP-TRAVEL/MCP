@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from schemas.itinerary import ItineraryDetail
-from create.client import create_itinerary, create_suggestion
+from create.client import create_itinerary, create_suggestion, change_attraction
 from triplet.client import triplet_manager
 from agents.mcp import MCPServerSse
 from agents import gen_trace_id, trace
@@ -42,4 +42,18 @@ async def suggest():
     with trace(workflow_name="Travel", trace_id=trace_id):
         print(f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}\n")
     res = await create_suggestion()
+    return res
+
+@router.post("/change_attraction")
+async def change(mapx: float, mapy: float):
+    async with MCPServerSse(
+        name="triplet_mcp_server",
+        params={
+            "url": "http://localhost:8070/sse",
+        }
+    ) as server:
+        trace_id = gen_trace_id()
+        with trace(workflow_name="Travel", trace_id=trace_id):
+            print(f"View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}\n")
+        res = await change_attraction(server, mapx, mapy)
     return res
