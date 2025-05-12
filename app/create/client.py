@@ -15,6 +15,8 @@ class SpotInfo:
     content_id: str
     content_name: str
     oneline_describe: str
+    mapx: float
+    mapy: float
 
 class DailySchedule(BaseModel):
     day: int
@@ -35,6 +37,8 @@ class Spot_DTO(BaseModel):
     address: str
     description: str
     image_url: str
+    mapx: float
+    mapy: float
 
 class ResponseDailySchedule(BaseModel):
     day: int
@@ -51,7 +55,7 @@ class ResponseFormat(BaseModel):
         
 INSTRUCTION = (
     "당신은 한국 여행 계획 전문가입니다.\n\n"
-    "사용자가 요청한 특정 지역에 대한 여행 일정을 작성해주세요.\n\n"
+    "사용자가 요청한 특정 지역(좌표로 제공. latitude 와 longitude) 에 대한 여행 일정을 작성해주세요.\n\n"
     "각 일정에는 다음 정보가 포함되어야 합니다:\n"
     "- 아침 식사 장소 [정확한 content_id, content_name,  한 줄 설명]\n"
     "- 점심 식사 장소 [정확한 content_id, content_name,  한 줄 설명]\n"
@@ -209,5 +213,7 @@ def create_spot_dto(attraction_type: str, spot_info: SpotInfo, places_dict: dict
         name=spot_info.content_name,
         address=place_data.get('address', ''),
         description=spot_info.oneline_describe,
-        image_url=place_data.get('image URL', '')
+        image_url=place_data.get('image URL', ''),
+        mapx=spot_info.mapx,
+        mapy=spot_info.mapy
     )

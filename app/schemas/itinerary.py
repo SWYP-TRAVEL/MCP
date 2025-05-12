@@ -16,7 +16,9 @@ class ItineraryDetail(BaseModel):
     travel_with: TravelWith
     duration: Annotated[int, "Travel duration in days"]
     description: str
-    theme: Optional[str]
+    theme: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     
     def __str__(self):
         # 한국어 문맥에 맞게 travel_with 값에 따라 다른 표현 사용

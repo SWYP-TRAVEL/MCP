@@ -25,7 +25,10 @@ model_settings = ModelSettings(
 class Destination(BaseModel):
     location: str = Field(description="구체적인 행정구역명 (예: 경기도 광주시, 대전광역시, 서울특별시)")
     theme: str = Field(description="해당 지역의 여행 테마")
+    address: str = Field(description="해당 지역의 정확한 주소")
     image_url: str = Field(description="해당 지역 이미지 url의 경로")
+    mapx: float = Field(description="해당 지역의 위도")
+    mapy: float = Field(description="해당 지역의 경도")
 
 class TravelRecommendations(BaseModel):
     recommendation1: Destination
@@ -41,7 +44,7 @@ async def triplet_manager(mcp_server: MCPServerSse, itinerary_detail: ItineraryD
         mcp_servers=[mcp_server],
         output_type=TravelRecommendations
     )
-    prompt = str(itinerary_detail) + "\n위 내용에 어울리는 여행지 3곳을 추천해주세요."
+    prompt = str(itinerary_detail.dict(exclude_none=True)) + "\n위 내용에 어울리는 여행지 3곳을 추천해주세요."
 
     result = await Runner.run(agent, input=prompt)
     print(result.final_output)
