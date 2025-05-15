@@ -14,6 +14,8 @@ class Coordinate:
 class SpotInfo:
     content_id: str
     content_name: str
+    address: str
+    image_url: str
     oneline_describe: str
     mapx: float
     mapy: float
@@ -211,9 +213,9 @@ def create_spot_dto(attraction_type: str, spot_info: SpotInfo, places_dict: dict
     return Spot_DTO(
         attraction_type=attraction_type,
         name=spot_info.content_name,
-        address=place_data.get('address', ''),
+        address=spot_info.address,
         description=spot_info.oneline_describe,
-        image_url=place_data.get('image URL', ''),
+        image_url=spot_info.image_url,
         mapx=spot_info.mapx,
         mapy=spot_info.mapy
     )
