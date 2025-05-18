@@ -34,6 +34,7 @@ class ItineraryDetail(BaseModel):
         theme_info = f", 여행 테마: {self.theme}" if self.theme else ""
         
         return (
-            f"{self.duration}일간, "
-            f"{companion_text}{theme_info}: {self.description}"
+            f"{self.duration}일간,\n"
+            f"{companion_text}{theme_info}: {self.description}\n"
+            f"current location (longitude : {self.longitude}, latitude: {self.latitude})\n"
         )

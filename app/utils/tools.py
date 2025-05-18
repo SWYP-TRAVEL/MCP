@@ -4,6 +4,8 @@ import xml.etree.ElementTree as et
 from typing import List, Optional
 from enum import Enum
 from dotenv import load_dotenv
+from pydantic import BaseModel, Field
+
 import os
 import urllib.parse
 load_dotenv()
@@ -39,27 +41,31 @@ class AttractionType(str, Enum):
     restaurant = "39"
 
 class AreaEnum(str, Enum):
-   전국 =  "0"
-   서울시 = "1"
-   인천시 = "2"
-   대전시 = "3"
-   대구시 = "4"
-   광주시 = "5"
-   부산시 = "6"
-   울산시 = "7"
-   세종특별자치시 = "8"
-   경기도 = "31"
-   강원특별자치도 = "32"
-   충청북도 = "33"
-   충청남도 = "34"
-   경상북도 = "35"
-   경상남도 = "36"
-   전북특별자치도 = "37"
-   전라남도 = "38"
-   제주도 = "39"
+    전국 = "0"
+    서울시 = "1"
+    인천시 = "2"
+    대전시 = "3"
+    대구시 = "4"
+    광주시 = "5"
+    부산시 = "6"
+    울산시 = "7"
+    세종특별자치시 = "8"
+    경기도 = "31"
+    강원특별자치도 = "32"
+    충청북도 = "33"
+    충청남도 = "34"
+    경상북도 = "35"
+    경상남도 = "36"
+    전북특별자치도 = "37"
+    전라남도 = "38"
+    제주도 = "39"
+
+# Pydantic 모델에서 AreaEnum 사용 예시
+class AreaModel(BaseModel):
+    area: AreaEnum
 
 def list_attractions_by_region(attraction_type: AttractionType = AttractionType.tourist_spot,
-                              region: AreaEnum = AreaEnum.전국) -> list[TourDto]:
+                              region: AreaModel = AreaEnum.전국) -> list[TourDto]:
     """
     Returns a list of attractions filtered by category and geographic region.
     
@@ -84,7 +90,7 @@ def list_attractions_by_region(attraction_type: AttractionType = AttractionType.
     """
     region_str: str = ""
     if region != AreaEnum.전국:
-        region_str = region.value
+        region_str = region.area
     region_params = {
         'MobileOS': 'ETC',  # Required
         'MobileApp': 'AppTest',  # Required

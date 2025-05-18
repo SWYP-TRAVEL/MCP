@@ -66,8 +66,9 @@ INSTRUCTION = (
     "- 관광지 2 [정확한 content_id, content_name,  한 줄 설명]\n\n"
     "모든 장소는 반드시 tool을 사용하여 실제 존재하는 장소의 정보를 조회해야 합니다.\n"
     "tool을 통해 각 장소의 content_name(place name), `content_id`을 정확히 가져오세요.\n"
-    "응답은 항상 한국어로 작성하고, 최종 결과는 ResponseFormat 형식에 맞게 구조화하세요.\n"
-    "사용자의 여행 일수에 맞춰 전체 일정을 일별로 구성해주세요."
+    "응답은 항상 한국어로 작성하고, 최종 결과는 ResponseFormat 형식에 맞도록 구조화하세요.\n"
+    "사용자의 여행 일수에 맞춰 전체 일정을 일별로 구성해주세요.\n"
+    "초반(1-2번)에만 `find_nearby_attractions` 쓰지만, 그 이후에는는 `list_attractions_by_region`를 쓰는것이 좋습니다!"
 )
 
 
@@ -109,7 +110,9 @@ async def create_itinerary(mcp_server: MCPServerSse, itinerary: ItineraryDetail)
         output_type=MCPResponseFormat
     )
     
-    prompt = "tool은 5번이내로 사용하고, 그 tool의 결과에만 기반해서 여행지를 추천해주세요.\n" + str(itinerary) 
+    prompt = """tool은 5번정도 사용해서 되도록이면 중복추천을 제외하고. 그 tool의 결과에만 기반해서 여행지를 추천해주세요.
+사용자 정보:
+""" + str(itinerary) 
     result: RunResult = await Runner.run(agent, input=prompt)
     print(result)
     places_dict = {}
@@ -117,18 +120,34 @@ async def create_itinerary(mcp_server: MCPServerSse, itinerary: ItineraryDetail)
     for item in result.new_items:
         if isinstance(item, ToolCallOutputItem):
             if item.output:
-                outputs = json.loads(item.output)
-                print(outputs)
-                for out in outputs:
-                    print(out)
-                    text = out['text']
-                    # 별도 함수를 통해 장소 정보 파싱
-                    place_info = parse_place_info(text)
+                try:
+                    # 디버깅을 위해 raw 출력 확인
+                    print(f"Raw output: {item.output}")
                     
-                    # content id가 있는 경우만 딕셔너리에 추가
+                    # JSON 파싱 시도
+                    outputs = json.loads(item.output)
+                    print(outputs)
+                    
+                    # 이전 코드와 같이 outputs 처리
+                    for out in outputs:
+                        print(out)
+                        if isinstance(out, dict) and 'text' in out:
+                            text = out['text']
+                        else:
+                            text = str(out)
+                        
+                        place_info = parse_place_info(text)
+                        if 'content id' in place_info:
+                            places_dict[place_info['content id']] = place_info
+                
+                except json.JSONDecodeError:
+                    # JSON 파싱 실패 시 직접 텍스트로 처리
+                    print(f"JSON parsing failed, treating as raw text: {item.output}")
+                    text = item.output
+                    place_info = parse_place_info(text)
                     if 'content id' in place_info:
                         places_dict[place_info['content id']] = place_info
-    
+        
     mcp_result: MCPResponseFormat = result.final_output
     
     # ResponseFormat 객체 생성
@@ -150,6 +169,7 @@ async def create_itinerary(mcp_server: MCPServerSse, itinerary: ItineraryDetail)
         )
         response_format.itnerary.append(response_daily)
     
+    print(response_format)
     # 디버깅용 출력 (필요시 유지)
     return response_format
 
