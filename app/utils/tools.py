@@ -89,7 +89,7 @@ def list_attractions_by_region(attraction_type: AttractionType = AttractionType.
         list_attractions_by_region(AttractionType.tourist_spots, AreaEnum.서울)
     """
     region_str: str = ""
-    if region != AreaEnum.전국:
+    if region.area != AreaEnum.전국:
         region_str = region.area
     region_params = {
         'MobileOS': 'ETC',  # Required
@@ -135,7 +135,7 @@ def find_nearby_attractions(mapX=127.0317056, mapY=37.289984, attraction_type: A
         'MobileApp': 'AppTest',  #필수
         "ServiceKey": api_key,  #api key
         "contentTypeId": attraction_type.value,  #관광타입
-        "numOfRows": 50,  #한페이지당 보여질 개수
+        "numOfRows": 100,  #한페이지당 보여질 개수
         "pageNo": 1,  #몇번째 페이지인지(이름순으로 정렬되어있음)
         "mapX": str(mapX),  #경도
         "mapY": str(mapY),  #위도

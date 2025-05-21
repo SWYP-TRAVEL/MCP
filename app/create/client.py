@@ -66,9 +66,10 @@ INSTRUCTION = (
     "- 관광지 2 [정확한 content_id, content_name,  한 줄 설명]\n\n"
     "모든 장소는 반드시 tool을 사용하여 실제 존재하는 장소의 정보를 조회해야 합니다.\n"
     "tool을 통해 각 장소의 content_name(place name), `content_id`을 정확히 가져오세요.\n"
-    "응답은 항상 한국어로 작성하고, 최종 결과는 ResponseFormat 형식에 맞게 구조화하세요.\n"
-    "사용자의 여행 일수에 맞춰 전체 일정을 일별로 구성해주세요."
-    "초반(1,2회)에는 `find_nearby_attractions` 쓰지만, 그이후는 `list_attractions_by_region`를 쓰는게 좋습니다"
+    "응답은 항상 한국어로 작성하고, 최종 결과는 ResponseFormat 형식에 맞도록 구조화하세요.\n"
+    "사용자의 여행 일수에 맞춰 전체 일정을 일별로 구성해주세요.\n"
+    "초반(1-2번)에만 `find_nearby_attractions` 쓰지만, 그 이후에는는 `list_attractions_by_region`를 쓰는것이 좋습니다!\n",
+    "**중복된 장소 추천을 피해세요**"
 )
 
 
@@ -110,8 +111,8 @@ async def create_itinerary(mcp_server: MCPServerSse, itinerary: ItineraryDetail)
         output_type=MCPResponseFormat
     )
     
-    prompt = """tool은 5번정도 사용해서 되도록이면 중복추천을 제외하고.
-그 tool의 결과에만 기반해서 여행지를 추천해주세요.
+    prompt = """tool은 10번 정도 사용해서 되도록이면 중복추천을 제외하고. 그 tool의 결과에만 기반해서 여행지를 추천해주세요.\n----\n
+사용자 정보:
 """ + str(itinerary) 
     result: RunResult = await Runner.run(agent, input=prompt)
     print(result)
