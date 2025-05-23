@@ -54,7 +54,12 @@ class ResponseFormat(BaseModel):
     title: str
     travel_days: int
     itnerary: List[ResponseDailySchedule]
-        
+
+class SuggestionFormat(BaseModel):
+    feeling: str = Field(max_length=50, description="현재 기분/감정 상태")
+    atmosphere: str = Field(max_length=50, description="선호하는 여행지 분위기") 
+    activities: str = Field(max_length=50, description="여행에서 하고 싶은 활동")
+
 INSTRUCTION = (
     "당신은 한국 여행 계획 전문가입니다.\n\n"
     "사용자가 요청한 특정 지역(좌표로 제공. latitude 와 longitude) 에 대한 여행 일정을 작성해주세요.\n\n"
@@ -68,8 +73,8 @@ INSTRUCTION = (
     "tool을 통해 각 장소의 content_name(place name), `content_id`을 정확히 가져오세요.\n"
     "응답은 항상 한국어로 작성하고, 최종 결과는 ResponseFormat 형식에 맞도록 구조화하세요.\n"
     "사용자의 여행 일수에 맞춰 전체 일정을 일별로 구성해주세요.\n"
-    "초반(1-2번)에만 `find_nearby_attractions` 쓰지만, 그 이후에는는 `list_attractions_by_region`를 쓰는것이 좋습니다!\n",
-    "**중복된 장소 추천을 피해세요**"
+    "초반(1-2번)에만 `find_nearby_attractions` 쓰지만, 그 이후에는 `list_attractions_by_region`를 쓰는것이 좋습니다!\n",
+    "**중복된 장소 추천을 피해세요!**"
 )
 
 
@@ -112,7 +117,7 @@ async def create_itinerary(mcp_server: MCPServerSse, itinerary: ItineraryDetail)
     )
     
     prompt = """tool은 10번 정도 사용해서 되도록이면 중복추천을 제외하고. 그 tool의 결과에만 기반해서 여행지를 추천해주세요.\n----\n
-사용자 정보:
+이 지역 주변의 장소들을 추천해주세요.:
 """ + str(itinerary) 
     result: RunResult = await Runner.run(agent, input=prompt)
     print(result)
@@ -174,33 +179,47 @@ async def create_itinerary(mcp_server: MCPServerSse, itinerary: ItineraryDetail)
     # 디버깅용 출력 (필요시 유지)
     return response_format
 
-async def create_suggestion(input: str):
-    model_name = "gpt-4.1-mini"
+async def create_suggestion():
+    model_name = "gpt-4.1-nano"
 
     model_settings = ModelSettings(
         tool_choice="none",
-        temperature=1,
+        temperature=0.52,
     )
     agent = Agent(
         model=model_name,
         model_settings=model_settings,
         name="Suggestion",
+        output_type=SuggestionFormat
     )
     prompt = """당신은 여행 서비스의 입력 필드에 표시될 플레이스홀더 텍스트를 생성해야 합니다. 사용자가 "어떤 여행을 꿈꾸고 계신가요?"라는 질문을 받았을 때 어떻게 답변할지 예시를 제공하세요.
 
 다음 조건을 따라 플레이스홀더 텍스트를 작성하세요:
-1. 다양한 여행 스타일(힐링, 모험, 문화체험, 자연 감상 등)을 반영하는 **1**개의 예시 문장을 작성하세요
-2. 현재 기분이나  활동에 대한 선호도를 표현하는 자연스러운 대화체로 작성하세요
-3. "~하고 싶어요", "~면 좋겠어요" 등의 소망/희망 표현을 사용하세요
-4. 전체 길이는 30자 내외로 작성하세요. 
-5. 한국어로 작성하세요
-6. 구체적 지역을 언급하지 마세요.[금지어]
+1. 다양한 여행 스타일(힐링, 모험, 문화체험, 자연 감상 등)을 반영하는 예시 문장을 작성하세요.
+2. 현재 기분이나 활동에 대한 선호도를 표현하는 자연스러운 대화체로 작성하세요.
+3. "~하고 싶어요", "~면 좋겠어요" 등의 소망/희망 표현을 사용하세요.
+4. 각 필드를 완전한 문장으로 작성하세요.
+5. 구체적 지역을 언급하지 마세요.[금지어]
 
 <example>
-요즘 지겨워서 조용하고 힐링되는 여행이었으면 좋겠어요.
+feeling: "요즘 너무 지쳐서 힐링이 필요해요"
+atmosphere: "조용하고 평화로운 곳이면 좋겠어요"
+activities: "천천히 산책하면서 쉬고 싶어요"
+
+feeling: "새로운 경험에 설레고 있어요"
+atmosphere: "활기차고 사람들이 많은 곳으로 가고싶어요"
+activities: "현지 맛집을 찾아다니고 싶어요"
+
+feeling: "여유로운 마음으로 떠나고 싶어요"
+atmosphere: "푸른 자연에 둘러싸인 곳이면 좋겠어요"
+activities: "캠핑하며 별구경하고 싶어요"
+
+feeling: "모험적인 기분이 들어요"
+atmosphere: "이색적이고 독특한 분위기를 느끼고싶어요"
+activities: "스릴 넘치는 액티비티를 해보고싶어요"
 </example>
-    """
-    prompt += "\n사용자가 현재까지 입력한 내용은 다음과 같습니다.\n"+input
+
+위 예시처럼 각 필드별로 30글자 이내의 완전한 문장으로, 자연스러운 플레이스홀더 텍스트를 생성해주세요."""
     result = await Runner.run(agent, prompt)
     return result.final_output
 

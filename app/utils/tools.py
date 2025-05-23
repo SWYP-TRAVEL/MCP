@@ -184,8 +184,8 @@ async def search_attractions_by_keyword(
         'MobileOS': 'ETC',  # Required
         'MobileApp': 'AppTest',  # Required
         "ServiceKey": api_key,  # API key
-        # "contentTypeId": attraction_type.value,  # Attraction category
-        # "areaCode": region_str,  # Geographic region code
+        "contentTypeId": "12",  # Attraction category
+        "areaCode": region_str,  # Geographic region code
         "keyword": keyword,  # URL-encoded search term
         "arrange" : "Q",
         "numOfRows": 100,  # Results per page
@@ -196,7 +196,7 @@ async def search_attractions_by_keyword(
     if response.text:
         print(response.content)
         dtos = extract_xml_data(response.text)
-        return random.sample(dtos, 5)
+        return random.sample(dtos, 10)
     else:
         return "not found"
 

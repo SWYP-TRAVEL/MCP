@@ -1,7 +1,7 @@
 """
 Itinerary schemas for API request/response models.
 """
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from enum import Enum
 from typing import Optional
 from typing import Annotated
@@ -12,11 +12,16 @@ class TravelWith(str, Enum):
     family  = "family"
     lover   = "lover"
 
+class ThemeFormat(BaseModel):
+    feeling: str = Field(max_length=50, description="현재 기분/감정 상태")
+    atmosphere: str = Field(max_length=50, description="선호하는 여행지 분위기") 
+    activities: str = Field(max_length=50, description="여행에서 하고 싶은 활동")
+
 class ItineraryDetail(BaseModel):
     travel_with: TravelWith
     duration: Annotated[int, "Travel duration in days"]
     description: str
-    theme: Optional[str] = None
+    theme: Optional[ThemeFormat] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     
@@ -31,7 +36,11 @@ class ItineraryDetail(BaseModel):
                 "lover": "연인과"
             }.get(self.travel_with.value, f"{self.travel_with.value}와")
         
-        theme_info = f", 여행 테마: {self.theme}" if self.theme else ""
+        # ThemeFormat 객체를 문자열로 변환
+        if self.theme:
+            theme_info = f", 여행 테마: {self.theme.feeling}/{self.theme.atmosphere}/{self.theme.activities}"
+        else:
+            theme_info = ""
         
         return (
             f"{self.duration}일간,\n"
